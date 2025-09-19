@@ -7,13 +7,15 @@ WORKDIR /src
 
 COPY . .
 
-RUN dotnet restore "./dotdocs.csproj"
+RUN dotnet nuget locals all --clear
 
-RUN dotnet publish "./dotdocs.csproj" -c Release -o /app/publish 
+RUN dotnet restore "dotDocs.csproj"
+
+RUN dotnet publish "dotDocs.csproj" -c Release -o /app/publish 
 
 FROM base AS final
 WORKDIR /app
 
 COPY --from=build /app/publish .
 
-ENTRYPOINT ["dotnet", "dotdocs.dll"]
+ENTRYPOINT ["dotnet", "dotDocs.dll"]

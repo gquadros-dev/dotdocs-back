@@ -1,5 +1,8 @@
-public class MongoDbSettings
+namespace backend.Models
 {
-    public string ConnectionString { get; set; } = null!;
-    public string DatabaseName { get; set; } = null!;
+    public class MongoDbSettings
+    {
+        public string ConnectionString { get; set; } = null!;
+        public string DatabaseName { get; set; } = null!;
+    }
 }
