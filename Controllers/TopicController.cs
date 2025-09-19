@@ -100,7 +100,48 @@ namespace backend.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IEnumerable<TopicModel>> GetAllTopics()
         {
-            return await _topicService.GetAllTopics();
+            return await _topicService.GetAllTopics(string.Empty);
+        }
+
+        /// <summary>
+        /// Busca todos os tópicos por tipo.
+        /// </summary>
+        [HttpGet("byType/{type}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IEnumerable<TopicModel>> GetTopicsByType(string type)
+        {
+            return await _topicService.GetAllTopics(type);
+        }
+
+        /// <summary>
+        /// Exclui um tópico pelo seu ID.
+        /// </summary>
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeleteTopic(string id)
+        {
+            var success = await _topicService.DeleteTopicAsync(id);
+
+            if (!success)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+
+        [HttpPatch("{id}/type")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateTopicType(string id, [FromBody] UpdateTopicTypeDto dto)
+        {
+            var success = await _topicService.UpdateTopicTypeAsync(id, dto.Type);
+            if (!success)
+            {
+                return NotFound();
+            }
+            return NoContent();
         }
     }
 }

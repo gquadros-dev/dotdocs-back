@@ -6,6 +6,19 @@ using backend.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var myAllowSpecificOrigins = "AllowNextJsApp";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: myAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins("http://localhost:3000")
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
+
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.Configure<MongoDbSettings>(
@@ -47,6 +60,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors(myAllowSpecificOrigins);
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

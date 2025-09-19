@@ -2,6 +2,7 @@ using MongoDB.Driver;
 using MongoDB.Bson;
 using backend.Interfaces;
 using backend.Models;
+using backend.Dtos;
 using MongoDB.Bson.Serialization;
 
 namespace backend.Services
@@ -15,8 +16,13 @@ namespace backend.Services
             _topicsCollection = database.GetCollection<TopicModel>("Topics");
         }
 
-        public async Task<IEnumerable<TopicModel>> GetAllTopics()
+        public async Task<IEnumerable<TopicModel>> GetAllTopics(string type)
         {
+            if (!string.IsNullOrEmpty(type))
+            {
+                return await _topicsCollection.Find(t => t.Type == type).ToListAsync();
+            }
+
             return await _topicsCollection.Find(_ => true).ToListAsync();
         }
 
@@ -31,6 +37,11 @@ namespace backend.Services
             return topic;
         }
 
+        public async Task<bool> DeleteTopicAsync(string id)
+        {
+            var result = await _topicsCollection.DeleteOneAsync(a => a.Id == id);
+            return result.IsAcknowledged && result.DeletedCount > 0;
+        }
 
         public async Task<bool> UpdateTopicAsync(string id, TopicModel topicWithNewValues)
         {
@@ -66,12 +77,31 @@ namespace backend.Services
                     { "as", "children" },
                     { "depthField", "level" }
                 }),
+                new BsonDocument("$lookup", new BsonDocument
+                {
+                    { "from", "Articles" },
+                    { "localField", "_id" },
+                    { "foreignField", "topicId" },
+                    { "as", "articles" },
+                    { "pipeline", new BsonArray
+                        {
+                            new BsonDocument("$project", new BsonDocument { { "_id", 1 }, { "title", 1 } })
+                        }
+                    }
+                }),
                 new BsonDocument("$sort", new BsonDocument("order", 1))
             };
 
-            var results = await _topicsCollection.Aggregate<BsonDocument>(pipeline).ToListAsync();
+            var results = await _topicsCollection.Aggregate<TopicTreeDto>(pipeline).ToListAsync();
 
-            return BsonSerializer.Deserialize<List<object>>(results.ToJson());
+            return results;
+        }
+        
+        public async Task<bool> UpdateTopicTypeAsync(string id, string newType)
+        {
+            var updateDefinition = Builders<TopicModel>.Update.Set(t => t.Type, newType);
+            var result = await _topicsCollection.UpdateOneAsync(t => t.Id == id, updateDefinition);
+            return result.IsAcknowledged && result.ModifiedCount > 0;
         }
     }
 }
